@@ -1,19 +1,15 @@
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi import FastAPI, HTTPException, Form
+from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Any
 from enum import Enum
 import pandas as pd
 import numpy as np
-from datetime import datetime, timedelta
+from datetime import datetime
 import json
 import logging
 import os
-from pathlib import Path
-import asyncio
 from dataclasses import dataclass
 import uvicorn
 
@@ -38,18 +34,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# إعداد المجلدات
-BASE_DIR = Path(__file__).resolve().parent
-TEMPLATES_DIR = BASE_DIR / "templates"
-STATIC_DIR = BASE_DIR / "static"
-
-# إنشاء المجلدات إذا لم تكن موجودة
-TEMPLATES_DIR.mkdir(exist_ok=True)
-STATIC_DIR.mkdir(exist_ok=True)
-
-# إعداد القوالب
-templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 # تعريف الـ Enums
 class AnalysisType(str, Enum):
@@ -81,7 +65,6 @@ class IndustryType(str, Enum):
     TELECOMMUNICATIONS = "telecommunications"
     TRANSPORTATION = "transportation"
     AGRICULTURE = "agriculture"
-    # إضافة المزيد من القطاعات...
 
 class MarketComparison(str, Enum):
     SAUDI = "saudi"
@@ -156,7 +139,24 @@ class FinancialAnalyzer:
                 "operating_margin": 0.12,
                 "net_margin": 0.08
             },
-            # إضافة المزيد من القطاعات...
+            "healthcare": {
+                "current_ratio": 2.0,
+                "quick_ratio": 1.5,
+                "debt_to_equity": 0.4,
+                "roe": 0.13,
+                "gross_margin": 0.7,
+                "operating_margin": 0.18,
+                "net_margin": 0.12
+            },
+            "retail": {
+                "current_ratio": 1.8,
+                "quick_ratio": 0.9,
+                "debt_to_equity": 0.7,
+                "roe": 0.11,
+                "gross_margin": 0.35,
+                "operating_margin": 0.08,
+                "net_margin": 0.05
+            }
         }
     
     def horizontal_analysis(self, data: List[FinancialData]) -> Dict[str, Any]:
@@ -204,14 +204,14 @@ class FinancialAnalyzer:
         
         for year_data in data:
             current_ratio = year_data.current_assets / year_data.current_liabilities
-            quick_ratio = (year_data.current_assets - year_data.current_assets * 0.3) / year_data.current_liabilities  # تقدير للمخزون
+            quick_ratio = (year_data.current_assets - year_data.current_assets * 0.3) / year_data.current_liabilities
             
             year_analysis = {
                 "year": year_data.year,
-                "current_ratio": current_ratio,
-                "quick_ratio": quick_ratio,
+                "current_ratio": round(current_ratio, 2),
+                "quick_ratio": round(quick_ratio, 2),
                 "working_capital": year_data.current_assets - year_data.current_liabilities,
-                "cash_ratio": year_data.cash_flow_operations / year_data.current_liabilities
+                "cash_ratio": round(year_data.cash_flow_operations / year_data.current_liabilities, 2)
             }
             results[f"year_{year_data.year}"] = year_analysis
         
@@ -224,12 +224,12 @@ class FinancialAnalyzer:
         for year_data in data:
             year_analysis = {
                 "year": year_data.year,
-                "gross_profit_margin": (year_data.gross_profit / year_data.revenue) * 100,
-                "operating_margin": (year_data.operating_income / year_data.revenue) * 100,
-                "net_margin": (year_data.net_income / year_data.revenue) * 100,
-                "roe": (year_data.net_income / year_data.shareholders_equity) * 100,
-                "roa": (year_data.net_income / year_data.total_assets) * 100,
-                "roic": (year_data.operating_income / (year_data.total_assets - year_data.current_liabilities)) * 100
+                "gross_profit_margin": round((year_data.gross_profit / year_data.revenue) * 100, 2),
+                "operating_margin": round((year_data.operating_income / year_data.revenue) * 100, 2),
+                "net_margin": round((year_data.net_income / year_data.revenue) * 100, 2),
+                "roe": round((year_data.net_income / year_data.shareholders_equity) * 100, 2),
+                "roa": round((year_data.net_income / year_data.total_assets) * 100, 2),
+                "roic": round((year_data.operating_income / (year_data.total_assets - year_data.current_liabilities)) * 100, 2)
             }
             results[f"year_{year_data.year}"] = year_analysis
         
@@ -240,9 +240,8 @@ class FinancialAnalyzer:
         results = {}
         
         for year_data in data:
-            # معادلة Altman Z-Score
             working_capital = year_data.current_assets - year_data.current_liabilities
-            retained_earnings = year_data.shareholders_equity * 0.7  # تقدير
+            retained_earnings = year_data.shareholders_equity * 0.7
             
             z_score = (
                 1.2 * (working_capital / year_data.total_assets) +
@@ -261,9 +260,9 @@ class FinancialAnalyzer:
             
             year_analysis = {
                 "year": year_data.year,
-                "z_score": z_score,
+                "z_score": round(z_score, 2),
                 "risk_level": risk_level,
-                "bankruptcy_probability": max(0, min(100, (3.0 - z_score) / 3.0 * 100))
+                "bankruptcy_probability": max(0, min(100, round((3.0 - z_score) / 3.0 * 100, 2)))
             }
             results[f"year_{year_data.year}"] = year_analysis
         
@@ -274,7 +273,6 @@ class FinancialAnalyzer:
         if len(data) < 3:
             raise ValueError("يجب توفير بيانات لثلاث سنوات على الأقل للتنبؤ")
         
-        # حساب معدلات النمو
         revenue_growth_rates = []
         profit_growth_rates = []
         
@@ -288,23 +286,22 @@ class FinancialAnalyzer:
         avg_revenue_growth = np.mean(revenue_growth_rates)
         avg_profit_growth = np.mean(profit_growth_rates)
         
-        # التنبؤ للسنة القادمة
         last_year = data[-1]
         next_year_revenue = last_year.revenue * (1 + avg_revenue_growth / 100)
         next_year_profit = last_year.net_income * (1 + avg_profit_growth / 100)
         
         return {
             "historical_growth": {
-                "revenue_growth_rates": revenue_growth_rates,
-                "profit_growth_rates": profit_growth_rates,
-                "avg_revenue_growth": avg_revenue_growth,
-                "avg_profit_growth": avg_profit_growth
+                "revenue_growth_rates": [round(rate, 2) for rate in revenue_growth_rates],
+                "profit_growth_rates": [round(rate, 2) for rate in profit_growth_rates],
+                "avg_revenue_growth": round(avg_revenue_growth, 2),
+                "avg_profit_growth": round(avg_profit_growth, 2)
             },
             "forecast_next_year": {
                 "year": last_year.year + 1,
-                "predicted_revenue": next_year_revenue,
-                "predicted_profit": next_year_profit,
-                "confidence_level": 75  # تقدير مبدئي
+                "predicted_revenue": round(next_year_revenue, 2),
+                "predicted_profit": round(next_year_profit, 2),
+                "confidence_level": 75
             }
         }
 
@@ -315,145 +312,13 @@ analyzer = FinancialAnalyzer()
 @app.get("/", response_class=HTMLResponse)
 async def read_root():
     """الصفحة الرئيسية"""
-    return """
-    <!DOCTYPE html>
-    <html dir="rtl" lang="ar">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>نظام رازان للتحليل المالي</title>
-        <style>
-            * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-            }
-            
-            body {
-                font-family: 'Arial', sans-serif;
-                background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
-                color: #FFD700;
-                min-height: 100vh;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-            
-            .container {
-                text-align: center;
-                max-width: 800px;
-                padding: 40px;
-                background: rgba(45, 45, 45, 0.8);
-                border-radius: 20px;
-                box-shadow: 0 20px 40px rgba(255, 215, 0, 0.1);
-                border: 2px solid #B8860B;
-            }
-            
-            h1 {
-                font-size: 3rem;
-                margin-bottom: 20px;
-                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-                color: #FFD700;
-            }
-            
-            .subtitle {
-                font-size: 1.5rem;
-                margin-bottom: 30px;
-                color: #DAA520;
-                font-weight: 300;
-            }
-            
-            .features {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-                gap: 20px;
-                margin: 30px 0;
-            }
-            
-            .feature-card {
-                background: rgba(0, 0, 0, 0.6);
-                padding: 20px;
-                border-radius: 15px;
-                border: 1px solid #B8860B;
-                transition: transform 0.3s ease;
-            }
-            
-            .feature-card:hover {
-                transform: translateY(-5px);
-                box-shadow: 0 10px 20px rgba(255, 215, 0, 0.2);
-            }
-            
-            .feature-title {
-                font-size: 1.2rem;
-                font-weight: bold;
-                margin-bottom: 10px;
-                color: #FFD700;
-            }
-            
-            .feature-desc {
-                color: #DAA520;
-                font-size: 0.9rem;
-            }
-            
-            .cta-button {
-                background: linear-gradient(45deg, #FFD700, #B8860B);
-                color: #000;
-                padding: 15px 30px;
-                font-size: 1.2rem;
-                border: none;
-                border-radius: 10px;
-                cursor: pointer;
-                margin-top: 30px;
-                font-weight: bold;
-                transition: all 0.3s ease;
-            }
-            
-            .cta-button:hover {
-                transform: scale(1.05);
-                box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4);
-            }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h1>نظام رازان للتحليل المالي</h1>
-            <p class="subtitle">أقوى نظام تحليل مالي بالذكاء الاصطناعي</p>
-            
-            <div class="features">
-                <div class="feature-card">
-                    <div class="feature-title">16+ نوع تحليل مالي</div>
-                    <div class="feature-desc">تحليل أفقي، رأسي، نسب مالية، مخاطر، تنبؤات</div>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-title">43+ قطاع صناعي</div>
-                    <div class="feature-desc">مقارنات شاملة مع معايير الصناعة</div>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-title">أسواق متعددة</div>
-                    <div class="feature-desc">سعودي، خليجي، عربي، عالمي</div>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-title">ذكاء اصطناعي</div>
-                    <div class="feature-desc">تحليل ذكي وتنبؤات دقيقة</div>
-                </div>
-            </div>
-            
-            <button class="cta-button" onclick="window.location.href='/api/docs'">
-                بدء التحليل
-            </button>
-        </div>
-    </body>
-    </html>
-    """
+    with open("index.html", "r", encoding="utf-8") as file:
+        return file.read()
 
 @app.post("/api/analyze")
 async def analyze_financial_data(data: FinancialInputData):
     """تحليل البيانات المالية"""
     try:
-        # تحويل البيانات إلى قائمة من FinancialData
         financial_data = []
         for year_data in data.years_data:
             financial_data.append(FinancialData(
@@ -472,7 +337,6 @@ async def analyze_financial_data(data: FinancialInputData):
                 year=year_data.get("year", 2024)
             ))
         
-        # تنفيذ التحليلات المطلوبة
         results = []
         
         for analysis_type in data.analysis_types:
