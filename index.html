@@ -5,14 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>نظام رازان للتحليل المالي - Razan AI Financial Analysis System</title>
     <style>
-        /* إعادة تعيين القيم الافتراضية */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
-        /* الألوان الرئيسية - أسود وذهبي */
         :root {
             --primary-black: #000000;
             --secondary-black: #1a1a1a;
@@ -23,7 +21,6 @@
             --text-white: #ffffff;
         }
 
-        /* تنسيق الجسم الرئيسي */
         body {
             font-family: 'Segoe UI', 'Tahoma', 'Arial', sans-serif;
             background: linear-gradient(135deg, var(--primary-black) 0%, var(--secondary-black) 50%, var(--tertiary-black) 100%);
@@ -32,14 +29,12 @@
             line-height: 1.6;
         }
 
-        /* الحاوية الرئيسية */
         .main-container {
             max-width: 1400px;
             margin: 0 auto;
             padding: 20px;
         }
 
-        /* الرأس */
         .header {
             text-align: center;
             margin-bottom: 40px;
@@ -64,7 +59,6 @@
             font-weight: 300;
         }
 
-        /* بطاقات الميزات */
         .features-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -105,7 +99,6 @@
             font-size: 1rem;
         }
 
-        /* نموذج التحليل */
         .analysis-form {
             background: rgba(26, 26, 26, 0.95);
             padding: 35px;
@@ -163,7 +156,6 @@
             resize: vertical;
         }
 
-        /* خيارات التحليل */
         .analysis-types {
             margin-bottom: 30px;
         }
@@ -202,7 +194,6 @@
             font-weight: 500;
         }
 
-        /* أزرار */
         .button-group {
             display: flex;
             gap: 15px;
@@ -243,7 +234,6 @@
             color: var(--primary-black);
         }
 
-        /* منطقة النتائج */
         .results-section {
             display: none;
             margin-top: 40px;
@@ -284,7 +274,6 @@
             line-height: 1.8;
         }
 
-        /* شاشة التحميل */
         .loading-overlay {
             display: none;
             position: fixed;
@@ -318,7 +307,6 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* تجاوبية للشاشات الصغيرة */
         @media (max-width: 768px) {
             .header h1 {
                 font-size: 2rem;
@@ -337,7 +325,6 @@
             }
         }
 
-        /* تخصيص شريط التمرير */
         ::-webkit-scrollbar {
             width: 12px;
         }
@@ -357,7 +344,6 @@
     </style>
 </head>
 <body>
-    <!-- شاشة التحميل -->
     <div id="loadingOverlay" class="loading-overlay">
         <div class="loading-content">
             <div class="loading-spinner"></div>
@@ -367,13 +353,11 @@
     </div>
 
     <div class="main-container">
-        <!-- الرأس -->
         <div class="header">
             <h1>نظام رازان للتحليل المالي</h1>
             <p class="subtitle">Razan AI Financial Analysis System</p>
         </div>
 
-        <!-- بطاقات الميزات -->
         <div class="features-grid">
             <div class="feature-card">
                 <div class="feature-icon">📊</div>
@@ -400,7 +384,6 @@
             </div>
         </div>
 
-        <!-- نموذج التحليل -->
         <div class="analysis-form">
             <h2 class="form-title">إدخال بيانات التحليل المالي</h2>
             
@@ -447,7 +430,6 @@
                     </div>
                 </div>
 
-                <!-- أنواع التحليل -->
                 <div class="analysis-types">
                     <label class="form-label">أنواع التحليل المطلوبة:</label>
                     <div class="checkbox-grid">
@@ -478,7 +460,6 @@
                     </div>
                 </div>
 
-                <!-- البيانات المالية -->
                 <div class="form-group">
                     <label class="form-label" for="financialData">البيانات المالية (JSON)</label>
                     <textarea id="financialData" name="financialData" class="form-textarea" placeholder='مثال:
@@ -508,7 +489,6 @@
             </form>
         </div>
 
-        <!-- منطقة النتائج -->
         <div id="resultsSection" class="results-section">
             <div class="results-container">
                 <h2 class="results-title">نتائج التحليل المالي</h2>
@@ -518,24 +498,20 @@
     </div>
 
     <script>
-        // متغيرات عامة
         const form = document.getElementById('analysisForm');
         const loadingOverlay = document.getElementById('loadingOverlay');
         const resultsSection = document.getElementById('resultsSection');
         const resultsContent = document.getElementById('resultsContent');
 
-        // معالج إرسال النموذج
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            // جمع البيانات
             const formData = new FormData(form);
             const companyName = formData.get('companyName');
             const industry = formData.get('industry');
             const marketComparison = formData.get('marketComparison');
             const language = formData.get('language');
             
-            // جمع أنواع التحليل المحددة
             const analysisTypes = [];
             const checkboxes = document.querySelectorAll('input[name="analysisTypes"]:checked');
             checkboxes.forEach(checkbox => {
@@ -547,7 +523,6 @@
                 return;
             }
 
-            // تحليل البيانات المالية
             let yearsData;
             try {
                 yearsData = JSON.parse(formData.get('financialData'));
@@ -556,7 +531,6 @@
                 return;
             }
 
-            // إعداد البيانات للإرسال
             const requestData = {
                 company_name: companyName,
                 industry: industry,
@@ -566,11 +540,9 @@
                 language: language
             };
 
-            // عرض شاشة التحميل
             showLoading();
 
             try {
-                // إرسال الطلب
                 const response = await fetch('/api/analyze', {
                     method: 'POST',
                     headers: {
@@ -594,21 +566,17 @@
             }
         });
 
-        // عرض شاشة التحميل
         function showLoading() {
             loadingOverlay.style.display = 'flex';
         }
 
-        // إخفاء شاشة التحميل
         function hideLoading() {
             loadingOverlay.style.display = 'none';
         }
 
-        // عرض النتائج
         function displayResults(data) {
             resultsContent.innerHTML = '';
 
-            // معلومات الشركة
             const companyInfo = document.createElement('div');
             companyInfo.className = 'result-card';
             companyInfo.innerHTML = `
@@ -622,7 +590,6 @@
             `;
             resultsContent.appendChild(companyInfo);
 
-            // نتائج التحليلات
             data.results.forEach(result => {
                 const resultCard = document.createElement('div');
                 resultCard.className = 'result-card';
@@ -645,100 +612,14 @@
                 resultsContent.appendChild(resultCard);
             });
 
-            // عرض قسم النتائج
             resultsSection.style.display = 'block';
             resultsSection.scrollIntoView({ behavior: 'smooth' });
         }
 
-        // إعادة تعيين النموذج
         function clearForm() {
             form.reset();
             resultsSection.style.display = 'none';
         }
-
-        // تحديد جميع أنواع التحليل
-        function selectAllAnalysis() {
-            const checkboxes = document.querySelectorAll('input[name="analysisTypes"]');
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = true;
-            });
-        }
-
-        // إلغاء تحديد جميع أنواع التحليل
-        function deselectAllAnalysis() {
-            const checkboxes = document.querySelectorAll('input[name="analysisTypes"]');
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = false;
-            });
-        }
-
-        // تحميل البيانات الافتراضية للتجربة
-        function loadSampleData() {
-            document.getElementById('companyName').value = 'شركة المثال للتجارة';
-            document.getElementById('industry').value = 'retail';
-            document.getElementById('marketComparison').value = 'saudi';
-            
-            const sampleData = [
-                {
-                    "year": 2022,
-                    "revenue": 800000,
-                    "gross_profit": 480000,
-                    "operating_income": 320000,
-                    "net_income": 240000,
-                    "total_assets": 1600000,
-                    "current_assets": 640000,
-                    "current_liabilities": 240000,
-                    "total_liabilities": 640000,
-                    "shareholders_equity": 960000,
-                    "cash_flow_operations": 280000,
-                    "cash_flow_investing": -80000,
-                    "cash_flow_financing": -40000
-                },
-                {
-                    "year": 2023,
-                    "revenue": 1000000,
-                    "gross_profit": 600000,
-                    "operating_income": 400000,
-                    "net_income": 300000,
-                    "total_assets": 2000000,
-                    "current_assets": 800000,
-                    "current_liabilities": 300000,
-                    "total_liabilities": 800000,
-                    "shareholders_equity": 1200000,
-                    "cash_flow_operations": 350000,
-                    "cash_flow_investing": -100000,
-                    "cash_flow_financing": -50000
-                }
-            ];
-            
-            document.getElementById('financialData').value = JSON.stringify(sampleData, null, 2);
-            
-            // تحديد بعض أنواع التحليل
-            document.getElementById('horizontal').checked = true;
-            document.getElementById('vertical').checked = true;
-            document.getElementById('liquidity').checked = true;
-            document.getElementById('profitability').checked = true;
-        }
-
-        // إضافة أزرار مساعدة
-        window.addEventListener('DOMContentLoaded', () => {
-            const buttonGroup = document.querySelector('.button-group');
-            
-            const selectAllBtn = document.createElement('button');
-            selectAllBtn.type = 'button';
-            selectAllBtn.className = 'btn btn-secondary';
-            selectAllBtn.textContent = 'تحديد الكل';
-            selectAllBtn.onclick = selectAllAnalysis;
-            
-            const sampleDataBtn = document.createElement('button');
-            sampleDataBtn.type = 'button';
-            sampleDataBtn.className = 'btn btn-secondary';
-            sampleDataBtn.textContent = 'بيانات تجريبية';
-            sampleDataBtn.onclick = loadSampleData;
-            
-            buttonGroup.appendChild(selectAllBtn);
-            buttonGroup.appendChild(sampleDataBtn);
-        });
     </script>
 </body>
 </html>
